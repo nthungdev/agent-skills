@@ -1,0 +1,52 @@
+{
+  "baseURL": "http://localhost:3000",
+  "headless": true,
+  "fallbackToHeaded": true,
+  "viewport": { "width": 1280, "height": 800 },
+  "deviceScaleFactor": 2,
+  "outputDir": "/abs/path/demos/feature-demo",
+  "auth": {
+    "path": "/sign-in",
+    "username": "admin",
+    "password": "your-password",
+    "usernameLabel": "Username",
+    "passwordLabel": "Password",
+    "buttonName": "Sign in"
+  },
+  "scenes": [
+    {
+      "name": "products-table-virtual-scroll",
+      "url": "/listing/products",
+      "recordVideo": true,
+      "steps": [
+        { "type": "waitForSelector", "selector": "tbody tr[data-index]" },
+        { "type": "wait", "ms": 800 },
+        { "type": "screenshot", "name": "products-table-top" },
+        { "type": "scroll", "selector": "div.overflow-auto", "target": 10000, "duration": 9000 },
+        { "type": "wait", "ms": 400 },
+        { "type": "screenshot", "name": "products-table-bottom" },
+        { "type": "scroll", "selector": "div.overflow-auto", "target": 0, "duration": 5000 },
+        { "type": "wait", "ms": 500 }
+      ]
+    },
+    {
+      "name": "jobs-table-virtual-scroll",
+      "url": "/listing/sync/jobs?limit=100",
+      "recordVideo": true,
+      "steps": [
+        { "type": "waitForSelector", "selector": "tbody tr[data-index]" },
+        { "type": "wait", "ms": 800 },
+        { "type": "screenshot", "name": "jobs-table-top" },
+        { "type": "click", "selector": "button[aria-label='Expand tasks']", "index": 0 },
+        { "type": "click", "selector": "button[aria-label='Expand tasks']", "index": 4 },
+        { "type": "wait", "ms": 600 },
+        { "type": "screenshot", "name": "jobs-table-expanded" },
+        { "type": "scroll", "selector": "div.max-h-\\[75vh\\]", "target": 4000, "duration": 9000 },
+        { "type": "wait", "ms": 400 },
+        { "type": "screenshot", "name": "jobs-table-bottom" },
+        { "type": "scroll", "selector": "div.max-h-\\[75vh\\]", "target": 0, "duration": 5000 },
+        { "type": "wait", "ms": 500 }
+      ]
+    }
+  ]
+}
