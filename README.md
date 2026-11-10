@@ -23,20 +23,20 @@ You can install any skill directly using the [`skills` CLI](https://skills.sh):
 ### 1. Install All Skills
 ```bash
 # Add to current project
-npx skills add <github-username>/agent-skills
+npx skills add nthungdev/agent-skills
 
 # Or install globally across all coding agents on your machine
-npx skills add <github-username>/agent-skills -g
+npx skills add nthungdev/agent-skills -g
 ```
 
 ### 2. Install a Specific Skill
 ```bash
 # Install only make-commit
-npx skills add <github-username>/agent-skills@make-commit -g
+npx skills add nthungdev/agent-skills@make-commit -g
 
 # Install demo-capture and github-attach
-npx skills add <github-username>/agent-skills@demo-capture -g
-npx skills add <github-username>/agent-skills@github-attach -g
+npx skills add nthungdev/agent-skills@demo-capture -g
+npx skills add nthungdev/agent-skills@github-attach -g
 ```
 
 ### 3. Updating Installed Skills
