@@ -4,7 +4,7 @@
 //   swiftc -o /tmp/ocr <skill-path>/scripts/ocr.swift
 //
 // Run:
-//   /tmp/ocr demos/<ticket>/*.png
+//   /tmp/ocr tmp/demos/<ticket>/*.png
 
 import AppKit
 import Foundation

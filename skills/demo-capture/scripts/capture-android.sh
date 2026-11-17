@@ -2,8 +2,8 @@
 # Headless-first Android capture script for demo-capture
 #
 # Usage:
-#   capture-android.sh --output-dir ./demos/ticket --screenshot home
-#   capture-android.sh --avd Pixel_8 --package com.example.app --output-dir ./demos/ticket --record feature --duration 5
+#   capture-android.sh --output-dir ./tmp/demos/ticket --screenshot home
+#   capture-android.sh --avd Pixel_8 --package com.example.app --output-dir ./tmp/demos/ticket --record feature --duration 5
 #
 set -euo pipefail
 
@@ -15,7 +15,7 @@ AVD_NAME="${AVD:-}"
 PACKAGE_NAME=""
 ACTIVITY_NAME=""
 APK_PATH=""
-OUTPUT_DIR="./demos"
+OUTPUT_DIR="./tmp/demos"
 ACTION="screenshot" # screenshot | record
 NAME="capture"
 DURATION=5

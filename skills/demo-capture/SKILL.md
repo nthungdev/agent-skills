@@ -60,7 +60,7 @@ Targets browser apps (React, Next.js, Vite, Vue, Svelte, static localhost server
   "fallbackToHeaded": true,        // default: true (fall back if headless fails)
   "viewport": { "width": 1280, "height": 800 },
   "deviceScaleFactor": 2,          // 2 = retina PNGs at 2560x1600
-  "outputDir": "/abs/path/demos/<ticket>",
+  "outputDir": "/abs/path/tmp/demos/<ticket>",
   "auth": {                        // optional
     "path": "/sign-in",
     "username": "superadmin",
@@ -119,11 +119,11 @@ Targets iOS applications (Swift, SwiftUI, React Native, Expo, Flutter).
 3. **Capture:**
    - **Screenshot:**
      ```bash
-     xcrun simctl io <device_udid> screenshot demos/<ticket>/<name>.png
+     xcrun simctl io <device_udid> screenshot tmp/demos/<ticket>/<name>.png
      ```
    - **Video Recording:**
      ```bash
-     xcrun simctl io <device_udid> recordVideo demos/<ticket>/videos/<name>.mp4 &
+     xcrun simctl io <device_udid> recordVideo tmp/demos/<ticket>/videos/<name>.mp4 &
      REC_PID=$!
      # ... run flow or sleep ...
      kill -2 $REC_PID
@@ -133,14 +133,14 @@ Targets iOS applications (Swift, SwiftUI, React Native, Expo, Flutter).
    # Screenshot:
    <skill-path>/scripts/capture-ios.sh \
      --device "iPhone 16" \
-     --output-dir demos/<ticket> \
+     --output-dir tmp/demos/<ticket> \
      --screenshot feature-home
 
    # Video recording (e.g. 8 seconds):
    <skill-path>/scripts/capture-ios.sh \
      --device "iPhone 16" \
      --bundle-id com.example.app \
-     --output-dir demos/<ticket> \
+     --output-dir tmp/demos/<ticket> \
      --record feature-walkthrough \
      --duration 8
    ```
@@ -180,27 +180,27 @@ Targets Android applications (Kotlin, Compose, React Native, Expo, Flutter).
 3. **Capture:**
    - **Screenshot:**
      ```bash
-     adb exec-out screencap -p > demos/<ticket>/<name>.png
+     adb exec-out screencap -p > tmp/demos/<ticket>/<name>.png
      ```
    - **Video Recording:**
      ```bash
      adb shell screenrecord /sdcard/demo.mp4 &
      # ... run flow or sleep ...
      adb shell pkill -2 screenrecord
-     adb pull /sdcard/demo.mp4 demos/<ticket>/videos/<name>.mp4
+     adb pull /sdcard/demo.mp4 tmp/demos/<ticket>/videos/<name>.mp4
      adb shell rm -f /sdcard/demo.mp4
      ```
 4. **Automated Helper Script:**
    ```bash
    # Screenshot:
    <skill-path>/scripts/capture-android.sh \
-     --output-dir demos/<ticket> \
+     --output-dir tmp/demos/<ticket> \
      --screenshot feature-home
 
    # Video recording (e.g. 8 seconds):
    <skill-path>/scripts/capture-android.sh \
      --package com.example.app \
-     --output-dir demos/<ticket> \
+     --output-dir tmp/demos/<ticket> \
      --record feature-walkthrough \
      --duration 8
    ```
@@ -230,29 +230,29 @@ Targets Android applications (Kotlin, Compose, React Native, Expo, Flutter).
 The agent cannot view images directly, so verify that captured screenshots contain expected text and labels:
 ```bash
 swiftc -o /tmp/ocr <skill-path>/scripts/ocr.swift
-/tmp/ocr demos/<ticket>/*.png
+/tmp/ocr tmp/demos/<ticket>/*.png
 ```
 Confirm the OCR text contains expected rows, buttons, or headers.
 
 ### Video Duration Verification
 Verify recording lengths with bundled or system `ffmpeg`:
 ```bash
-for f in demos/<ticket>/videos/*; do ffmpeg -i "$f" 2>&1 | grep Duration; done
+for f in tmp/demos/<ticket>/videos/*; do ffmpeg -i "$f" 2>&1 | grep Duration; done
 ```
 
 ---
 
 ## Output Organization & Hand-off
 
-Save all outputs into `demos/<ticket>/`:
+Save all outputs into `tmp/demos/<ticket>/`:
 ```
-demos/<ticket>/
+tmp/demos/<ticket>/
   ├── <feature>-top.png
   ├── <feature>-bottom.png
   └── videos/
       └── <feature>-walkthrough.webm (or .mp4)
 ```
 
-- **`demos/` is untracked:** Never commit captured assets into git.
+- **`tmp/demos/` is untracked:** Never commit captured assets into git.
 - **Hand-off to PR:** Use the **github-attach** skill to upload assets to GitHub and obtain clean image links.
 - **Hand-off to Linear:** Use the **linear-ticket-e2e** skill to upload assets to Linear tickets.

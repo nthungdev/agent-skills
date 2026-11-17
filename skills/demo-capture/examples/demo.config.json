@@ -4,7 +4,7 @@
   "fallbackToHeaded": true,
   "viewport": { "width": 1280, "height": 800 },
   "deviceScaleFactor": 2,
-  "outputDir": "/abs/path/demos/feature-demo",
+  "outputDir": "/abs/path/tmp/demos/feature-demo",
   "auth": {
     "path": "/sign-in",
     "username": "admin",
