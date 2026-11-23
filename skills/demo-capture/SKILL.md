@@ -28,6 +28,28 @@ the user.
 
 ---
 
+## Output Directory (resolve first)
+
+Resolve the output directory once, before any capture, and use the printed **absolute** path
+everywhere `$DEMO_DIR` appears below (shell variables do not persist between agent tool calls):
+
+```bash
+TICKET=<ticket-or-branch>
+ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
+if [ -n "$ROOT" ] && git -C "$ROOT" check-ignore -q "tmp/demos/$TICKET/x.png"; then
+  DEMO_DIR="$ROOT/tmp/demos/$TICKET"          # repo tmp/ is git-ignored
+else
+  BASE="${TMPDIR:-/tmp}"
+  DEMO_DIR="${BASE%/}/demos/$(basename "${ROOT:-$PWD}")/$TICKET"   # user's temp dir
+fi
+mkdir -p "$DEMO_DIR/videos" && echo "$DEMO_DIR"
+```
+
+- Use the repo's `tmp/demos/` only when git already ignores it. Never edit `.gitignore` to make it fit.
+- Otherwise use the user's temp dir (`$TMPDIR`, falling back to `/tmp`), namespaced by repo name.
+
+---
+
 ## 1. Web Apps (Playwright)
 
 Targets browser apps (React, Next.js, Vite, Vue, Svelte, static localhost servers, etc.).
@@ -60,7 +82,7 @@ Targets browser apps (React, Next.js, Vite, Vue, Svelte, static localhost server
   "fallbackToHeaded": true,        // default: true (fall back if headless fails)
   "viewport": { "width": 1280, "height": 800 },
   "deviceScaleFactor": 2,          // 2 = retina PNGs at 2560x1600
-  "outputDir": "/abs/path/tmp/demos/<ticket>",
+  "outputDir": "<absolute $DEMO_DIR>",
   "auth": {                        // optional
     "path": "/sign-in",
     "username": "admin",
@@ -119,11 +141,11 @@ Targets iOS applications (Swift, SwiftUI, React Native, Expo, Flutter).
 3. **Capture:**
    - **Screenshot:**
      ```bash
-     xcrun simctl io <device_udid> screenshot tmp/demos/<ticket>/<name>.png
+     xcrun simctl io <device_udid> screenshot $DEMO_DIR/<name>.png
      ```
    - **Video Recording:**
      ```bash
-     xcrun simctl io <device_udid> recordVideo tmp/demos/<ticket>/videos/<name>.mp4 &
+     xcrun simctl io <device_udid> recordVideo $DEMO_DIR/videos/<name>.mp4 &
      REC_PID=$!
      # ... run flow or sleep ...
      kill -2 $REC_PID
@@ -133,14 +155,14 @@ Targets iOS applications (Swift, SwiftUI, React Native, Expo, Flutter).
    # Screenshot:
    <skill-path>/scripts/capture-ios.sh \
      --device "iPhone 16" \
-     --output-dir tmp/demos/<ticket> \
+     --output-dir $DEMO_DIR \
      --screenshot feature-home
 
    # Video recording (e.g. 8 seconds):
    <skill-path>/scripts/capture-ios.sh \
      --device "iPhone 16" \
      --bundle-id com.example.app \
-     --output-dir tmp/demos/<ticket> \
+     --output-dir $DEMO_DIR \
      --record feature-walkthrough \
      --duration 8
    ```
@@ -180,27 +202,27 @@ Targets Android applications (Kotlin, Compose, React Native, Expo, Flutter).
 3. **Capture:**
    - **Screenshot:**
      ```bash
-     adb exec-out screencap -p > tmp/demos/<ticket>/<name>.png
+     adb exec-out screencap -p > $DEMO_DIR/<name>.png
      ```
    - **Video Recording:**
      ```bash
      adb shell screenrecord /sdcard/demo.mp4 &
      # ... run flow or sleep ...
      adb shell pkill -2 screenrecord
-     adb pull /sdcard/demo.mp4 tmp/demos/<ticket>/videos/<name>.mp4
+     adb pull /sdcard/demo.mp4 $DEMO_DIR/videos/<name>.mp4
      adb shell rm -f /sdcard/demo.mp4
      ```
 4. **Automated Helper Script:**
    ```bash
    # Screenshot:
    <skill-path>/scripts/capture-android.sh \
-     --output-dir tmp/demos/<ticket> \
+     --output-dir $DEMO_DIR \
      --screenshot feature-home
 
    # Video recording (e.g. 8 seconds):
    <skill-path>/scripts/capture-android.sh \
      --package com.example.app \
-     --output-dir tmp/demos/<ticket> \
+     --output-dir $DEMO_DIR \
      --record feature-walkthrough \
      --duration 8
    ```
@@ -254,29 +276,29 @@ await page.evaluate((text) => {
 The agent cannot view images directly, so verify that captured screenshots contain expected text and labels:
 ```bash
 swiftc -o /tmp/ocr <skill-path>/scripts/ocr.swift
-/tmp/ocr tmp/demos/<ticket>/*.png
+/tmp/ocr $DEMO_DIR/*.png
 ```
 Confirm the OCR text contains expected rows, buttons, or headers.
 
 ### Video Duration Verification
 Verify recording lengths with bundled or system `ffmpeg`:
 ```bash
-for f in tmp/demos/<ticket>/videos/*; do ffmpeg -i "$f" 2>&1 | grep Duration; done
+for f in $DEMO_DIR/videos/*; do ffmpeg -i "$f" 2>&1 | grep Duration; done
 ```
 
 ---
 
 ## Output Organization & Hand-off
 
-Save all outputs into `tmp/demos/<ticket>/`:
+Save all outputs into `$DEMO_DIR/`:
 ```
-tmp/demos/<ticket>/
+$DEMO_DIR/
   ├── <feature>-top.png
   ├── <feature>-bottom.png
   └── videos/
       └── <feature>-walkthrough.webm (or .mp4)
 ```
 
-- **`tmp/demos/` is untracked:** Never commit captured assets into git.
+- **Never commit captured assets:** `$DEMO_DIR` is either git-ignored or outside the repo.
 - **Hand-off to PR:** Use the **github-attach** skill to upload assets to GitHub and obtain clean image links.
 - **Hand-off to Linear:** Use the **linear-ticket-e2e** skill to upload assets to Linear tickets.
