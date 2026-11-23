@@ -63,7 +63,7 @@ Targets browser apps (React, Next.js, Vite, Vue, Svelte, static localhost server
   "outputDir": "/abs/path/tmp/demos/<ticket>",
   "auth": {                        // optional
     "path": "/sign-in",
-    "username": "superadmin",
+    "username": "admin",
     "password": "password",
     "usernameLabel": "Username",
     "passwordLabel": "Password",
@@ -223,6 +223,30 @@ Targets Android applications (Kotlin, Compose, React Native, Expo, Flutter).
 - **Terminal / CLI tools:** Use `vhs` (which generates headless recordings) or `asciinema`.
 
 ---
+
+## Captions in recordings
+
+When a recording needs burned-in captions (what is being done, what was wrong, what is right now), inject them into the page; `capture.js` has no caption step.
+
+- **Place the caption bar at the top of the frame.** Video players draw their controls (HUD) over the bottom of the video, which hides a bottom caption. Never use `bottom: 0`.
+- Keep the BEFORE / AFTER badge inside the same bar (a chip at its left edge), not in a separate corner, so nothing else competes for the top-right or bottom of the frame.
+- Use a fixed bar, font >= 18px, high contrast, `pointer-events: none`, and hold each caption >= 2.5 s. Inject it before `page.screenshot` too, so PNGs match the video.
+- The bar covers the top of the app. Capture flows that need the app's top bar with the bar hidden for that step, or add top padding to the page body while the bar shows.
+
+```js
+await page.evaluate((text) => {
+  let bar = document.getElementById("demo-caption");
+  if (!bar) {
+    bar = document.createElement("div");
+    bar.id = "demo-caption";
+    bar.style.cssText =
+      "position:fixed;top:0;left:0;right:0;z-index:2147483647;display:flex;gap:12px;align-items:center;" +
+      "padding:12px 20px;font:600 18px/1.35 system-ui,sans-serif;color:#fff;background:rgba(0,0,0,.8);pointer-events:none";
+    document.body.appendChild(bar);
+  }
+  bar.textContent = text;
+}, "AFTER (this PR): the toggle announces its state");
+```
 
 ## Verification
 
