@@ -12,7 +12,7 @@
  * Usage:
  *   node upload-to-github.js --login
  *   node upload-to-github.js --pr https://github.com/owner/repo/pull/42 \
- *     --file demos/PROJ-123/before.png --file demos/PROJ-123/flow.mp4 \
+ *     --file $DEMO_DIR/before.png --file $DEMO_DIR/flow.mp4 \
  *     --out /tmp/gh-upload-proj-123.json
  *
  * See SKILL.md for the workflow. Exit codes:

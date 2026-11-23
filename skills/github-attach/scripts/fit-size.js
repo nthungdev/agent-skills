@@ -6,7 +6,7 @@
  *
  *   node fit-size.js [--box 640x480] <image>...                    # JSON: width/height per file
  *   node fit-size.js --rewrite <body.md> [--box 640x480] \
- *        --map 'Before=demos/x/before.png' --map 'After=demos/x/after.png'
+ *        --map "Before=$DEMO_DIR/before.png" --map "After=$DEMO_DIR/after.png"
  *       # rewrites ![alt](user-attachments url) into <img ... width height> in place
  */
 "use strict";

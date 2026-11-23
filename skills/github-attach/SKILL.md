@@ -18,7 +18,7 @@ body can reference — including bodies written by GitHub MCP.
 
 ## When to use
 
-- `demo-capture` produced PNGs and WebM recordings under `demos/<ticket>/` and they belong on
+- `demo-capture` produced PNGs and WebM recordings under its resolved `$DEMO_DIR` and they belong on
   a PR (description or verification comment).
 - The PR body/comment is written via GitHub MCP or the API, so the text cannot carry the
   file itself.
@@ -53,11 +53,11 @@ the Playwright-bundled `ffmpeg-mac` — it is built with `--disable-everything` 
 and cannot produce H.264 MP4.
 
 ```bash
-ffmpeg -y -i demos/<ticket>/videos/flow.webm \
+ffmpeg -y -i $DEMO_DIR/videos/flow.webm \
   -c:v libx264 -preset veryfast -crf 28 -pix_fmt yuv420p \
   -vf scale='min(1280,iw)':-2 -movflags +faststart \
-  demos/<ticket>/videos/flow.mp4
-stat -f%z demos/<ticket>/videos/flow.mp4   # under 10MB wins; raise -crf (28 -> 32 -> 36) or cut length otherwise
+  $DEMO_DIR/videos/flow.mp4
+stat -f%z $DEMO_DIR/videos/flow.mp4   # under 10MB wins; raise -crf (28 -> 32 -> 36) or cut length otherwise
 ```
 
 Oversized PNGs (over 10 MB): re-capture at `deviceScaleFactor: 1`, or downscale with the
@@ -100,20 +100,20 @@ Requires `gh` >= 2.99 (check with `gh --version`); unsupported on GHES.
 # Comment: screenshots inline, video as an inline player
 gh pr comment 42 \
   --body-file /tmp/pr-comment.md \
-  --attach './demos/PROJ-123/before.png#Before' \
-  --attach './demos/PROJ-123/after.png#After' \
-  --attach ./demos/PROJ-123/videos/flow.mp4
+  --attach "$DEMO_DIR/before.png#Before" \
+  --attach "$DEMO_DIR/after.png#After" \
+  --attach $DEMO_DIR/videos/flow.mp4
 
 # Description: rewrite references already present in the body, append the rest
 gh pr edit 42 \
   --body-file /tmp/pr-body.md \
-  --attach './demos/PROJ-123/before.png#Before' \
-  --attach ./demos/PROJ-123/videos/flow.mp4
+  --attach "$DEMO_DIR/before.png#Before" \
+  --attach $DEMO_DIR/videos/flow.mp4
 ```
 
 Behavior worth knowing:
 
-- A local path referenced in the body (e.g. `![Before](./demos/PROJ-123/before.png)`) is
+- A local path referenced in the body (e.g. `![Before]($DEMO_DIR/before.png)`) is
   rewritten in place to the uploaded asset; anything attached but not referenced is appended.
 - Alt text is `<path>#<alt>`; videos render as a player and take no alt text.
 - `gh pr edit 42 --attach <file>` **without** `--body-file` keeps the current body and appends
@@ -130,7 +130,7 @@ gh pr view 42 --json body --jq .body > /tmp/pr-body.md
 # ![alt](user-attachments url) -> <img ... width height>, contain-fit per image.
 # --map alt=local file (alt is the text after # in --attach); videos (bare URLs) are left alone
 node <skill-path>/scripts/fit-size.js --rewrite /tmp/pr-body.md --box 640x480 \
-  --map Before=./demos/PROJ-123/before.png --map After=./demos/PROJ-123/after.png
+  --map Before=$DEMO_DIR/before.png --map After=$DEMO_DIR/after.png
 # edit /tmp/pr-body.md: group the <img> lines in one <p>, move them and the video URL into
 # the Demo section, keep the footer last; then:
 gh pr edit 42 --body-file /tmp/pr-body.md
@@ -165,8 +165,8 @@ A headed browser opens; sign in (2FA included) and leave it. The session is stor
 ```bash
 node <skill-path>/scripts/upload-to-github.js \
   --pr https://github.com/<owner>/<repo>/pull/42 \
-  --file demos/PROJ-123/before.png \
-  --file demos/PROJ-123/videos/flow.mp4 \
+  --file $DEMO_DIR/before.png \
+  --file $DEMO_DIR/videos/flow.mp4 \
   --image-box 640x480 \
   --out /tmp/gh-upload-proj-123.json
 ```
@@ -220,4 +220,4 @@ Optionally confirm rendering in the same browser profile: reopen the PR, and che
   commit it, never point `--profile` at a repo working tree.
 - The uploader never submits and never clobbers a non-empty draft without `--force`; it
   clears only the draft it created.
-- `demos/` stays untracked; assets live on GitHub, not in git.
+- Demo assets stay out of git (`$DEMO_DIR` is git-ignored or outside the repo); they live on GitHub.

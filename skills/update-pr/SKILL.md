@@ -29,7 +29,7 @@ This skill automates updating an existing GitHub Pull Request associated with th
    - If commits added since the last description (or since the existing demo) change anything a user can see or interact with, re-capture affected flows with the **demo-capture** skill (Step 4) and attach them with **github-attach** (Step 6).
    - Keep existing media for flows that did not change. Replace media only for flows that did. Capture as many screenshots and recordings as it takes; no fixed count.
    - Skip for non-visible changes, or when the user says no demo / `--no-demo`. Say "no demo: <reason>" in one line.
-   - Never commit `demos/`. Never block the update on a failed capture: report the failure and continue.
+   - Never commit demo assets. Never block the update on a failed capture: report the failure and continue.
 5. **Reviewer-Aid Sections (conditional)**:
    - Add a section only when its condition holds; omit it entirely otherwise. Never write "N/A".
    - **How to test**: any behavior change. 3-6 numbered steps with expected results. Reuse these as the demo capture script.
@@ -115,7 +115,7 @@ This skill automates updating an existing GitHub Pull Request associated with th
 ### Step 4: Capture Demo Media (user-visible changes only)
 
 1. **Decide**: compare the delta commits and the PR's current `## Demo` section. If no visible flow changed, skip to Step 5.
-2. **Capture** with the **demo-capture** skill (headless first, headed fallback) into `demos/<ticket-or-branch>/`, covering only changed or new flows. Add captions per demo-capture's "Captions in recordings" when a recording needs context.
+2. **Capture** with the **demo-capture** skill (headless first, headed fallback) into its resolved `$DEMO_DIR` (repo `tmp/demos/<ticket-or-branch>/` if git-ignored, else the user's temp dir), covering only changed or new flows. Add captions per demo-capture's "Captions in recordings" when a recording needs context.
 3. **Verify**: OCR the PNGs and check video durations as described in demo-capture. Re-capture once on failure; if it still fails, continue without new media and tell the user.
 4. **Prep for upload**: transcode `.webm` to H.264 `.mp4` with system ffmpeg and keep files under GitHub's size limits (see github-attach "Media limits and prep").
 
