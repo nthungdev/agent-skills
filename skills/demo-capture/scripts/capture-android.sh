@@ -2,8 +2,8 @@
 # Headless-first Android capture script for demo-capture
 #
 # Usage:
-#   capture-android.sh --output-dir ./tmp/demos/ticket --screenshot home
-#   capture-android.sh --avd Pixel_8 --package com.example.app --output-dir ./tmp/demos/ticket --record feature --duration 5
+#   capture-android.sh --output-dir "$DEMO_DIR" --screenshot home
+#   capture-android.sh --avd Pixel_8 --package com.example.app --output-dir "$DEMO_DIR" --record feature --duration 5
 #
 set -euo pipefail
 

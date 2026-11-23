@@ -2,8 +2,8 @@
 # Headless-first iOS capture script for demo-capture
 #
 # Usage:
-#   capture-ios.sh --device "iPhone 16" --output-dir ./tmp/demos/ticket --screenshot home
-#   capture-ios.sh --device "iPhone 16" --bundle-id com.example.app --output-dir ./tmp/demos/ticket --record feature --duration 5
+#   capture-ios.sh --device "iPhone 16" --output-dir "$DEMO_DIR" --screenshot home
+#   capture-ios.sh --device "iPhone 16" --bundle-id com.example.app --output-dir "$DEMO_DIR" --record feature --duration 5
 #
 set -euo pipefail
 

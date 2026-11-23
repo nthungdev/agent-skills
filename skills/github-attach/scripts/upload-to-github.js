@@ -12,7 +12,7 @@
  * Usage:
  *   node upload-to-github.js --login
  *   node upload-to-github.js --pr https://github.com/owner/repo/pull/42 \
- *     --file demos/PROJ-123/before.png --file demos/PROJ-123/flow.mp4 \
+ *     --file $DEMO_DIR/before.png --file $DEMO_DIR/flow.mp4 \
  *     --out /tmp/gh-upload-proj-123.json
  *
  * See SKILL.md for the workflow. Exit codes:
@@ -25,6 +25,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { createRequire } = require("node:module");
+const { fitFile, parseBox, DEFAULT_BOX } = require("./fit-size.js");
 
 // Resolve `playwright` relative to cwd, standard require, or ~/.demo-capture fallback.
 function loadPlaywright() {
@@ -90,16 +91,18 @@ function usage() {
       "  node upload-to-github.js --login [--profile <dir>] [--timeout <ms>]",
       "  node upload-to-github.js --pr <github issue/PR URL> --file <path> [--file <path> ...]",
       "                           [--out <json>] [--screenshot <png>] [--profile <dir>]",
-      "                           [--timeout <ms>] [--image-width <px>] [--headed] [--force]",
+      "                           [--timeout <ms>] [--image-box <WxH>] [--image-width <px>]",
+      "                           [--headed] [--force]",
       "",
-      "  --image-width <px>  width of each <img> in the markdown block (default 640;",
-      "                      use 260-320 for portrait phone screenshots; 0 = plain ![]())",
+      "  --image-box <WxH>   contain-fit each <img> inside this box, keeping aspect ratio and",
+      "                      never upscaling (default 640x480; fits portrait and landscape)",
+      "  --image-width <px>  legacy: fixed width only, ignores height (0 = plain ![]())",
     ].join("\n"),
   );
 }
 
 function parseArgs(argv) {
-  const args = { files: [], headless: true, imageWidth: 640 };
+  const args = { files: [], headless: true, imageBox: DEFAULT_BOX, imageWidth: null };
   for (let i = 0; i < argv.length; i++) {
     const flag = argv[i];
     const value = () => {
@@ -130,6 +133,13 @@ function parseArgs(argv) {
         break;
       case "--profile":
         args.profile = value();
+        break;
+      case "--image-box":
+        try {
+          args.imageBox = parseBox(value());
+        } catch (err) {
+          throw new AppError(2, err.message);
+        }
         break;
       case "--image-width":
         args.imageWidth = Number(value());
@@ -321,15 +331,26 @@ const HTML_SRC_RE = new RegExp(`src="(${USER_ATTACHMENT_URL})"`, "i");
 const escapeAttr = (s) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 
 /**
- * Images become `<img width>` because GitHub strips CSS but honors the width attribute,
- * so full-resolution captures (e.g. 1179px phone screenshots) don't render page-wide.
+ * Images become `<img width height>` because GitHub strips CSS but honors those attributes.
+ * The pair is computed by contain-fit into a box (fit-size.js), so portrait captures are
+ * height-limited and landscape captures width-limited.
  * Consecutive images share one `<p>` so they sit side by side. Videos stay bare URLs:
  * GitHub only turns a bare user-attachments URL into a player, and the player can't be sized.
  */
-function buildMarkdown(entries, imageWidth) {
+function buildMarkdown(entries, { imageBox, imageWidth }) {
+  const plain = imageWidth === 0;
+  const sizeAttrs = (file) => {
+    if (imageWidth) return `width="${imageWidth}"`;
+    try {
+      const { width, height } = fitFile(file, imageBox);
+      return `width="${width}" height="${height}"`;
+    } catch {
+      return `width="${imageBox.w}"`;
+    }
+  };
   const alt = (file) =>
     path.basename(file).replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ");
-  if (!imageWidth) {
+  if (plain) {
     return entries
       .map((e) => (e.kind === "image" ? `![${alt(e.file)}](${e.url})` : e.url))
       .join("\n\n");
@@ -342,7 +363,7 @@ function buildMarkdown(entries, imageWidth) {
   };
   for (const e of entries) {
     if (e.kind === "image") {
-      row.push(`  <img src="${e.url}" alt="${escapeAttr(alt(e.file))}" width="${imageWidth}">`);
+      row.push(`  <img src="${e.url}" alt="${escapeAttr(alt(e.file))}" ${sizeAttrs(e.file)}>`);
     } else {
       flush();
       blocks.push(e.url);
@@ -543,7 +564,7 @@ async function runUpload(args) {
         url: entry.url,
         matchedBy: entry.matchedBy ?? "position",
       })),
-      markdown: buildMarkdown(entries.filter((entry) => entry.file), args.imageWidth),
+      markdown: buildMarkdown(entries.filter((entry) => entry.file), args),
       warnings,
     };
 

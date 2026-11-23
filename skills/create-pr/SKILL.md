@@ -26,7 +26,7 @@ This skill automates the creation of a GitHub Pull Request comparing the current
 3. **Demo Media for User-Visible Changes**:
    - If the diff changes anything a user can see or interact with (web UI, mobile screens, CLI/TUI output), capture demo assets with the **demo-capture** skill (Step 4) and attach them with **github-attach** (Step 6).
    - Skip for non-visible changes (backend-only, config, docs, tests, refactors without UI impact), or when the user says no demo / `--no-demo`. Say "no demo: <reason>" in one line.
-   - Never commit `demos/`. Never block PR creation on a failed capture: report the failure and continue without media.
+   - Never commit demo assets. Never block PR creation on a failed capture: report the failure and continue without media.
 4. **Reviewer-Aid Sections (conditional)**:
    - Add a section only when its condition holds; omit it entirely otherwise. Never write "N/A".
    - **How to test**: any behavior change. 3-6 numbered steps with expected results. Reuse these as the demo capture script.
@@ -104,7 +104,7 @@ This skill automates the creation of a GitHub Pull Request comparing the current
 ### Step 4: Capture Demo Media (user-visible changes only)
 
 1. **Decide**: from `git diff --stat` and the changed files, classify the change as visible (components, pages, styles, screens, CLI output) or not. If not visible, skip to Step 5.
-2. **Capture** with the **demo-capture** skill (headless first, headed fallback), output to `demos/<ticket-or-branch>/`:
+2. **Capture** with the **demo-capture** skill (headless first, headed fallback), output to its resolved `$DEMO_DIR` (repo `tmp/demos/<ticket-or-branch>/` if git-ignored, else the user's temp dir):
    - Web: write a capture config, run `capture.js` (start the dev server first if needed).
    - iOS / Android: `capture-ios.sh` / `capture-android.sh`.
    - Capture as many screenshots and recordings as it takes to show every changed flow and state; no fixed count. Add a before shot from the base branch when the change is a visual fix.
