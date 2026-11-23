@@ -22,6 +22,9 @@ This skill automates the creation of a GitHub Pull Request comparing the current
    - If the branch name (e.g., `feature/PROJ-123`, `bugfix/APP-456`) or commit history contains a ticket ID pattern (e.g., `PROJ-123`, `APP-456`), prefix the PR title with `[<TICKET-ID>] <type>(<scope>): <summary>`.
 3. **Approval Before Creation**:
    - Present the proposed PR title, base branch, head branch, and description to the user before submitting, unless the user explicitly requested automatic creation (e.g., "create the PR directly", "auto-create").
+4. **Readable Bullets**:
+   - If a bullet point would enumerate more than 2 distinct items, break them into nested sub-bullets instead of comma-separating them on one line.
+   - Each sub-bullet should describe one artifact or concept.
 
 ---
 
