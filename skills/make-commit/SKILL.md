@@ -140,3 +140,10 @@ If project rules or repository instructions require pre-commit validation:
 3. **Verify Result**:
    - Run `git log -n <count> --stat` to verify each commit was created cleanly.
    - Report the commit sequence and summaries to the user.
+
+---
+
+### Step 6: Hand Off to PR Skills
+
+- If the user wants a pull request after committing, invoke **create-pr** (no PR exists yet) or **update-pr** (branch already has an open PR). Never run `gh pr create` / `gh pr edit` or the GitHub MCP PR tools directly.
+- If the user did not ask for a PR, stop after reporting the commits.
