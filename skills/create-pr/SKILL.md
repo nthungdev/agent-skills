@@ -1,9 +1,12 @@
 ---
 name: create-pr
 description: >-
-  Creates a pull request covering changes from the current git HEAD to the origin's primary branch.
-  Determines the remote default branch, analyzes commits and diffs, extracts ticket IDs,
-  ensures the branch is pushed, crafts a concise high-level description, and creates the PR via GitHub MCP or gh CLI.
+  Use whenever the user asks to create, open, raise, submit, or push a pull request (PR), or when finished
+  work on a branch should become a PR. ALWAYS use this instead of calling `gh pr create` or GitHub MCP
+  `create_pull_request` directly. Creates a PR from the current HEAD to the origin's primary branch: detects
+  the default branch, analyzes commits and diffs, extracts ticket IDs, pushes the branch, captures demo
+  screenshots/recordings for user-visible changes via demo-capture, writes a concise high-level description
+  (how to test, review focus, optional flow diagram, risks), and attaches demo media via github-attach.
 ---
 
 # Create PR
@@ -20,8 +23,21 @@ This skill automates the creation of a GitHub Pull Request comparing the current
    - Summarize the business/functional intent and key architectural components impacted.
 2. **Ticket ID Prefix**:
    - If the branch name (e.g., `feature/PROJ-123`, `bugfix/APP-456`) or commit history contains a ticket ID pattern (e.g., `PROJ-123`, `APP-456`), prefix the PR title with `[<TICKET-ID>] <type>(<scope>): <summary>`.
-3. **Approval Before Creation**:
-   - Present the proposed PR title, base branch, head branch, and description to the user before submitting, unless the user explicitly requested automatic creation (e.g., "create the PR directly", "auto-create").
+3. **Demo Media for User-Visible Changes**:
+   - If the diff changes anything a user can see or interact with (web UI, mobile screens, CLI/TUI output), capture demo assets with the **demo-capture** skill (Step 4) and attach them with **github-attach** (Step 6).
+   - Skip for non-visible changes (backend-only, config, docs, tests, refactors without UI impact), or when the user says no demo / `--no-demo`. Say "no demo: <reason>" in one line.
+   - Never commit `demos/`. Never block PR creation on a failed capture: report the failure and continue without media.
+4. **Reviewer-Aid Sections (conditional)**:
+   - Add a section only when its condition holds; omit it entirely otherwise. Never write "N/A".
+   - **How to test**: any behavior change. 3-6 numbered steps with expected results. Reuse these as the demo capture script.
+   - **Review focus**: diff touches more than ~5 files or contains a non-obvious decision. 1-3 bullets.
+   - **Flow** (Mermaid `flowchart`, `sequenceDiagram`, or `stateDiagram`): change alters a multi-step flow, state machine, cross-service calls, or the data model. Skip for simple UI or logic tweaks.
+   - **Risk / Rollout**: only when a migration, feature flag, breaking change, or new env var is involved.
+   - No per-file changelog and no before/after section (the diff and demo media cover those).
+   - Section order: Overview, Key Changes, Demo, How to test, Review focus, Flow, Risk / Rollout, Related Issue.
+5. **Readable Bullets**:
+   - If a bullet point would enumerate more than 2 distinct items, break them into nested sub-bullets instead of comma-separating them on one line.
+   - Each sub-bullet should describe one artifact or concept.
 
 ---
 
@@ -85,7 +101,20 @@ This skill automates the creation of a GitHub Pull Request comparing the current
 
 ---
 
-### Step 4: Craft Title & High-Level Description
+### Step 4: Capture Demo Media (user-visible changes only)
+
+1. **Decide**: from `git diff --stat` and the changed files, classify the change as visible (components, pages, styles, screens, CLI output) or not. If not visible, skip to Step 5.
+2. **Capture** with the **demo-capture** skill (headless first, headed fallback), output to `demos/<ticket-or-branch>/`:
+   - Web: write a capture config, run `capture.js` (start the dev server first if needed).
+   - iOS / Android: `capture-ios.sh` / `capture-android.sh`.
+   - Capture as many screenshots and recordings as it takes to show every changed flow and state; no fixed count. Add a before shot from the base branch when the change is a visual fix.
+   - Add captions per demo-capture's "Captions in recordings" when the recording needs context.
+3. **Verify**: OCR the PNGs and check video durations as described in demo-capture. Fix and re-capture once; if it still fails, continue without media and tell the user.
+4. **Prep for upload**: transcode `.webm` to H.264 `.mp4` with system ffmpeg and keep files under GitHub's size limits (see github-attach "Media limits and prep").
+
+---
+
+### Step 5: Craft Title & High-Level Description
 
 1. **Title**:
    - Format: `[<TICKET-ID>] <type>(<scope>): <summary>` (e.g., `[PROJ-123] feat(auth): add OAuth2 token refresh`).
@@ -99,18 +128,35 @@ This skill automates the creation of a GitHub Pull Request comparing the current
      ## Key Changes
      - High-level functional or architectural adjustments.
 
+     ## Demo
+     - Only when demo media exists (Step 4 / github-attach); omit otherwise.
+
+     ## How to test
+     1. Numbered steps a reviewer can follow, each with the expected result.
+
+     ## Review focus
+     - 1-3 bullets: risky files or decisions to look at first, and what is intentionally out of scope.
+
+     ## Flow
+     ```mermaid
+     flowchart LR
+       A[Trigger] --> B[Step] --> C[Result]
+     ```
+
+     ## Risk / Rollout
+     - Migrations, feature flags, breaking changes, new env vars.
+
      ## Related Issue
      - Closes / Relates to `<TICKET-ID>` (or link to Linear/GitHub issue).
      ```
 
 ---
 
-### Step 5: Submit Pull Request
+### Step 6: Submit Pull Request & Attach Demo Media
 
-> **Demo media:** GitHub MCP and the REST API cannot upload attachments. To embed
-> screenshots or a recording in the description, harvest `user-attachments` URLs with the
-> **github-attach** skill (headless browser) and put them in the body before creating the
-> PR; or attach them afterwards with `gh pr edit <n> --attach <file>` (gh >= 2.99).
+> GitHub MCP and the REST API cannot upload attachments, and github-attach's browser path
+> needs an existing PR URL. So: create the PR first (with the `## Demo` section as a
+> placeholder if media exists), then attach.
 
 1. **GitHub MCP (Preferred)**:
    Call `call_mcp_tool` on `github-mcp-server` with tool `create_pull_request`:
@@ -135,5 +181,11 @@ This skill automates the creation of a GitHub Pull Request comparing the current
    gh pr create --base "<primary-branch>" --head "<current-branch>" --title "<title>" --body "<body>"
    ```
 
-3. **Confirm to User**:
-   - Share the created PR URL and base -> head summary.
+3. **Attach Demo Media** (only if Step 4 produced assets), using the **github-attach** skill:
+   - `gh --version` >= 2.99 on github.com: Path A (`gh pr edit <n> --attach ...`), then apply image sizing per github-attach.
+   - Otherwise: Path B (browser harvest against the new PR URL), then update the body with `gh pr edit --body-file` or GitHub MCP `update_pull_request`.
+   - Put the media under `## Demo`, keep any attribution footer last, then run github-attach's Verify checks.
+   - If upload fails (e.g. exit code 3, not logged in), leave the PR as created, tell the user the exact fix (`--login`), and list the local asset paths.
+
+4. **Confirm to User**:
+   - Share the created PR URL, base -> head summary, and whether demo media was attached, skipped (with reason), or failed.
