@@ -8,6 +8,7 @@ A collection of high-productivity AI agent skills following the open [Agent Skil
 
 | Skill | Description | Key Tools / Dependencies |
 | :--- | :--- | :--- |
+| [`address-pr`](skills/address-pr/SKILL.md) | Triages unresolved PR review comments, verifies them against the codebase, implements fixes, commits/pushes, replies with commit SHAs, and resolves fixed threads. | GitHub MCP or `gh` CLI |
 | [`demo-capture`](skills/demo-capture/SKILL.md) | Capture retina screenshots (PNG) and video recordings across Web, iOS Simulator, and Android Emulator headlessly. | Playwright, `xcrun simctl`, `adb`, `ffmpeg` |
 | [`github-attach`](skills/github-attach/SKILL.md) | Upload images and video assets to GitHub issues/PRs via `gh --attach` or headless browser composer harvest. | GitHub CLI (`gh >= 2.99`) or Playwright |
 | [`create-pr`](skills/create-pr/SKILL.md) | Analyzes branch commits/diffs, extracts ticket identifiers, and crafts structured, high-level pull requests. | GitHub MCP or `gh` CLI |
@@ -52,7 +53,7 @@ npx skills update -g
 ### Environment Variables & Authentication
 
 1. **GitHub CLI / MCP**:
-   - For `create-pr`, `update-pr`, and `github-attach` (Path A):
+   - For `address-pr`, `create-pr`, `update-pr`, and `github-attach` (Path A):
      - Authenticate GitHub CLI: `gh auth login`
      - Verify with: `gh auth status`
    - Or configure your agent's GitHub MCP server with `GITHUB_PERSONAL_ACCESS_TOKEN`.
@@ -79,6 +80,8 @@ agent-skills/
 ├── LICENSE
 ├── README.md
 └── skills/
+    ├── address-pr/
+    │   └── SKILL.md
     ├── create-pr/
     │   └── SKILL.md
     ├── demo-capture/
